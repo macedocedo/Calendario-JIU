@@ -1,0 +1,1124 @@
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>Calendário de Treinos</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body {
+                background-color: #f5f5f5;
+                color: #333;
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                touch-action: pan-y;
+            }
+
+            .header {
+                background-color: #4285f4;
+                color: white;
+                padding: 3px;
+                text-align: center;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+
+            .calendar-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 10px;
+                flex-grow: 1;
+            }
+
+            .period-display {
+                width: 100%;
+                background-color: white;
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .period-dates {
+                display: flex;
+                justify-content: space-around;
+                margin: 10px 0;
+                font-weight: bold;
+                color: #4285f4;
+            }
+
+            .period-info {
+                margin-top: 10px;
+                font-size: 0.9rem;
+            }
+
+            .days-counter {
+                display: flex;
+                justify-content: space-around;
+                width: 100%;
+                background-color: white;
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-bottom: 15px;
+            }
+
+            .counter-box {
+                text-align: center;
+                padding: 0 10px;
+            }
+
+            .counter-value {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #4285f4;
+            }
+
+            .counter-label {
+                font-size: 0.8rem;
+                color: #666;
+            }
+
+            .form-container {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #555;
+            }
+
+            .form-control {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                font-size: 1rem;
+            }
+
+            .training-days {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 5px;
+            }
+
+            .training-day {
+                flex: 1;
+                min-width: calc(33% - 5px);
+            }
+
+            .training-day input {
+                display: none;
+            }
+
+            .training-day label {
+                display: block;
+                padding: 8px;
+                text-align: center;
+                background-color: #f0f0f0;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .training-day input:checked + label {
+                background-color: #4285f4;
+                color: white;
+            }
+
+            textarea.form-control {
+                min-height: 80px;
+                resize: vertical;
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 10px;
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .action-buttons button {
+                flex: 1;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .btn-save {
+                background-color: #34a853;
+            }
+
+            .btn-reset {
+                background-color: #ea4335;
+            }
+
+            .carousel {
+                width: 100%;
+                overflow: hidden;
+                position: relative;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+
+            .carousel-inner {
+                display: flex;
+                transition: transform 0.3s ease;
+            }
+
+            .calendar-month {
+                min-width: 100%;
+                padding: 8px;
+                background-color: white;
+            }
+
+            .month-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                margin-bottom: 8px;
+                background-color: #4285f4;
+                color: white;
+                border-radius: 8px;
+            }
+
+            .month-title {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+
+            .carousel-nav {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                pointer-events: none;
+            }
+
+            .carousel-nav button {
+                background-color: rgba(66, 133, 244, 0.8);
+                color: white;
+                border: none;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                cursor: pointer;
+                pointer-events: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+
+            .weekdays {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                text-align: center;
+                font-weight: bold;
+                font-size: 0.8rem;
+                margin-bottom: 5px;
+            }
+
+            .weekday {
+                padding: 5px;
+            }
+
+            .days-grid {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 3px;
+            }
+
+            .day {
+                padding: 8px 0;
+                text-align: center;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+                aspect-ratio: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.9rem;
+            }
+
+            .day:hover {
+                background-color: #e0e0e0;
+            }
+
+            .day.today {
+                background-color: #4285f4;
+                color: white;
+                font-weight: bold;
+            }
+
+            .day.selected {
+                background-color: #f4b400;
+                color: white;
+                font-weight: bold;
+            }
+
+            .day.in-range {
+                background-color: #a8dab5;
+            }
+
+            .day.range-start {
+                background-color: #34a853;
+                color: white;
+                font-weight: bold;
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            .day.range-end {
+                background-color: #34a853;
+                color: white;
+                font-weight: bold;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+
+            .day.other-month {
+                color: #aaa;
+                opacity: 0.7;
+            }
+
+            .day.training-day {
+                background-color: #f4b400;
+                color: white;
+                font-weight: bold;
+            }
+
+            .day-number {
+                font-size: 1rem;
+            }
+
+            .saved-periods {
+                width: 100%;
+                margin-top: 15px;
+            }
+
+            .saved-periods h3 {
+                margin-bottom: 10px;
+                text-align: center;
+                color: #4285f4;
+            }
+
+            .period-item {
+                background-color: white;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 10px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                position: relative;
+            }
+
+            .period-item-dates {
+                display: flex;
+                justify-content: space-between;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            .period-item-days {
+                color: #4285f4;
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+            }
+
+            .period-item-info {
+                font-size: 0.9rem;
+                color: #666;
+                margin: 5px 0;
+            }
+
+            .period-item-actions {
+                display: flex;
+                gap: 5px;
+                margin-top: 10px;
+            }
+
+            .period-item-actions button {
+                padding: 5px 10px;
+                border: none;
+                border-radius: 4px;
+                font-size: 0.8rem;
+                cursor: pointer;
+            }
+
+            .btn-edit {
+                background-color: #4285f4;
+                color: white;
+            }
+
+            .btn-delete {
+                background-color: #ea4335;
+                color: white;
+            }
+
+            .no-periods {
+                text-align: center;
+                color: #666;
+                padding: 10px;
+            }
+
+            .date-inputs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .date-input {
+                flex: 1;
+            }
+
+            @media (max-width: 400px) {
+                .day {
+                    padding: 5px 0;
+                    font-size: 0.8rem;
+                }
+                
+                .day-number {
+                    font-size: 0.9rem;
+                }
+                
+                .counter-value {
+                    font-size: 1.2rem;
+                }
+                
+                .training-day {
+                    min-width: calc(50% - 5px);
+                }
+                
+                .date-inputs {
+                    flex-direction: column;
+                    gap: 5px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Calendário de Treinos</h1>
+        </div>
+
+        <div class="calendar-container">
+            <div class="period-display">
+                <div>Período Selecionado</div>
+                <div class="period-dates">
+                    <span id="start-date-display">--/--/----</span>
+                    <span>até</span>
+                    <span id="end-date-display">--/--/----</span>
+                </div>
+                <div class="period-info">
+                    <span id="total-days-display">0 dias</span>
+                </div>
+            </div>
+
+            <div class="days-counter">
+                <div class="counter-box">
+                    <div class="counter-value" id="training-days-count">0</div>
+                    <div class="counter-label">Dias de treino</div>
+                </div>
+                <div class="counter-box">
+                    <div class="counter-value" id="total-days-count">0</div>
+                    <div class="counter-label">Total de dias</div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <div class="date-inputs">
+                    <div class="form-group date-input">
+                        <label for="start-date-input">Data Inicial</label>
+                        <input type="date" id="start-date-input" class="form-control">
+                    </div>
+                    <div class="form-group date-input">
+                        <label for="end-date-input">Data Final</label>
+                        <input type="date" id="end-date-input" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="belt-grade">Faixa/Grau</label>
+                    <input type="text" id="belt-grade" class="form-control" placeholder="Ex: Faixa Azul, Grau 2">
+                </div>
+                
+                <div class="form-group">
+                    <label>Dias de Treino</label>
+                    <div class="training-days">
+                        <div class="training-day">
+                            <input type="checkbox" id="day-1" name="trainingDays" value="1">
+                            <label for="day-1">Segunda</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-2" name="trainingDays" value="2">
+                            <label for="day-2">Terça</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-3" name="trainingDays" value="3">
+                            <label for="day-3">Quarta</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-4" name="trainingDays" value="4">
+                            <label for="day-4">Quinta</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-5" name="trainingDays" value="5">
+                            <label for="day-5">Sexta</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-6" name="trainingDays" value="6">
+                            <label for="day-6">Sábado</label>
+                        </div>
+                        <div class="training-day">
+                            <input type="checkbox" id="day-0" name="trainingDays" value="0">
+                            <label for="day-0">Domingo</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="period-notes">Observações</label>
+                    <textarea id="period-notes" class="form-control" placeholder="Anotações sobre o período de treino..."></textarea>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="save-period" class="btn-save">Salvar Período</button>
+                <button id="reset-period" class="btn-reset">Limpar</button>
+            </div>
+
+            <div class="carousel">
+                <div class="carousel-inner" id="carousel-inner">
+                    <!-- Os meses serão gerados dinamicamente via JavaScript -->
+                </div>
+                <div class="carousel-nav">
+                    <button id="prev-month">←</button>
+                    <button id="next-month">→</button>
+                </div>
+            </div>
+
+            <div class="saved-periods">
+                <h3>Períodos Salvos</h3>
+                <div id="saved-periods-list">
+                    <!-- Períodos salvos serão exibidos aqui -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Configurações iniciais
+                const today = new Date();
+                let currentMonth = today.getMonth();
+                let currentYear = today.getFullYear();
+                let startDate = null;
+                let endDate = null;
+                let isSelectingStartDate = true;
+                let savedPeriods = JSON.parse(localStorage.getItem('savedPeriods')) || [];
+                let editingIndex = -1;
+                let lastSelectedDay = null;
+                
+                // Elementos do DOM
+                const carouselInner = document.getElementById('carousel-inner');
+                const prevMonthBtn = document.getElementById('prev-month');
+                const nextMonthBtn = document.getElementById('next-month');
+                const startDateDisplay = document.getElementById('start-date-display');
+                const endDateDisplay = document.getElementById('end-date-display');
+                const totalDaysDisplay = document.getElementById('total-days-display');
+                const trainingDaysCountEl = document.getElementById('training-days-count');
+                const totalDaysCountEl = document.getElementById('total-days-count');
+                const beltGradeInput = document.getElementById('belt-grade');
+                const trainingDaysCheckboxes = document.querySelectorAll('input[name="trainingDays"]');
+                const periodNotes = document.getElementById('period-notes');
+                const savePeriodBtn = document.getElementById('save-period');
+                const resetPeriodBtn = document.getElementById('reset-period');
+                const savedPeriodsList = document.getElementById('saved-periods-list');
+                const startDateInput = document.getElementById('start-date-input');
+                const endDateInput = document.getElementById('end-date-input');
+
+                // Gerar os 12 meses do carrossel
+            function generateMonths() {
+                carouselInner.innerHTML = '';
+                
+                // Gerar 3 meses: anterior, atual e próximo
+                for (let i = -1; i <= 1; i++) {
+                    let month = currentMonth + i;
+                    let year = currentYear;
+                    
+                    // Ajustar o mês e ano se ultrapassar os limites
+                    if (month < 0) {
+                        month = 11;
+                        year--;
+                    } else if (month > 11) {
+                        month = 0;
+                        year++;
+                    }
+                    
+                    const monthElement = document.createElement('div');
+                    monthElement.className = 'calendar-month';
+                    monthElement.innerHTML = generateMonthHTML(month, year);
+                    
+                    carouselInner.appendChild(monthElement);
+                }
+                
+                updateCarouselPosition();
+                updatePeriodDisplay();
+                highlightTrainingDays();
+                
+                if (lastSelectedDay) {
+                    highlightSelectedDay(lastSelectedDay);
+                }
+            }
+
+                            // Gerar HTML de um mês específico
+            function generateMonthHTML(month, year) {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay();
+                
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                
+                let html = `
+                    <div class="month-header">
+                        <div class="month-title">${monthNames[month]} ${year}</div>
+                    </div>
+                    <div class="weekdays">
+                        <div class="weekday">Dom</div>
+                        <div class="weekday">Seg</div>
+                        <div class="weekday">Ter</div>
+                        <div class="weekday">Qua</div>
+                        <div class="weekday">Qui</div>
+                        <div class="weekday">Sex</div>
+                        <div class="weekday">Sáb</div>
+                    </div>
+                    <div class="days-grid">
+                `;
+                
+                // Dias vazios no início do mês
+                for (let i = 0; i < startingDay; i++) {
+                    html += `<div class="day other-month"></div>`;
+                }
+                
+                // Dias do mês atual
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const date = new Date(year, month, i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const isToday = dateStr === new Date().toISOString().split('T')[0];
+                    const isSelected = dateStr === lastSelectedDay;
+                    
+                    let classes = ['day'];
+                    if (isToday) classes.push('today');
+                    if (isSelected) classes.push('selected');
+                    
+                    html += `
+                        <div class="${classes.join(' ')}" data-date="${dateStr}">
+                            <div class="day-number">${i}</div>
+                        </div>
+                    `;
+                }
+                
+                // Dias vazios no final do mês
+                const totalCells = Math.ceil((daysInMonth + startingDay) / 7) * 7;
+                const remainingCells = totalCells - (daysInMonth + startingDay);
+                
+                for (let i = 0; i < remainingCells; i++) {
+                    html += `<div class="day other-month"></div>`;
+                }
+                
+                html += `</div>`;
+                return html;
+            }
+
+                // Gerar HTML de um dia específico
+        function generateDayHTML(dayNumber, date, isOtherMonth) {
+            // Usar a data local sem conversão de fuso horário
+            const dateStr = formatDateForStorage(date);
+            const todayStr = formatDateForStorage(new Date());
+            const isToday = dateStr === todayStr;
+            const isStartDate = startDate && dateStr === formatDateForStorage(startDate);
+            const isEndDate = endDate && dateStr === formatDateForStorage(endDate);
+            const isInRange = isDateInRange(date);
+            const isTrainingDay = isTrainingDate(date);
+            const isSelected = lastSelectedDay === dateStr;
+            
+            let classes = ['day'];
+            if (isOtherMonth) classes.push('other-month');
+            if (isToday) classes.push('today');
+            if (isStartDate) classes.push('range-start');
+            if (isEndDate) classes.push('range-end');
+            if (isInRange && !isStartDate && !isEndDate) classes.push('in-range');
+            if (isTrainingDay) classes.push('training-day');
+            if (isSelected) classes.push('selected');
+            
+            return `
+                <div class="${classes.join(' ')}" data-date="${dateStr}">
+                    <div class="day-number">${dayNumber}</div>
+                </div>
+            `;
+        }
+        // Função para formatar a data para armazenamento (YYYY-MM-DD)
+        function formatDateForStorage(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Função para criar data a partir de string YYYY-MM-DD
+        function createDateFromString(dateStr) {
+            const parts = dateStr.split('-');
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+                // Destacar o dia selecionado
+                function highlightSelectedDay(dateStr) {
+                    // Remover a classe 'selected' de todos os dias
+                    document.querySelectorAll('.day').forEach(day => {
+                        day.classList.remove('selected');
+                    });
+                    
+                    // Adicionar a classe 'selected' ao dia clicado
+                    const dayElement = document.querySelector(`.day[data-date="${dateStr}"]`);
+                    if (dayElement) {
+                        dayElement.classList.add('selected');
+                    }
+                }
+
+                // Verificar se a data está no intervalo selecionado
+                function isDateInRange(date) {
+                    if (!startDate || !endDate) return false;
+                    
+                    const dateStr = formatDateForStorage(date);
+                    const startStr = formatDateForStorage(startDate);
+                    const endStr = formatDateForStorage(endDate);
+                    
+                    return dateStr > startStr && dateStr < endStr;
+                }
+
+                // Verificar se a data é um dia de treino
+                function isTrainingDate(date) {
+                    if (!startDate || !endDate) return false;
+                    
+                    const dateStr = date.toISOString().split('T')[0];
+                    const startStr = startDate.toISOString().split('T')[0];
+                    const endStr = endDate.toISOString().split('T')[0];
+                    
+                    // Verificar se está dentro do período salvo
+                    if (dateStr < startStr || dateStr > endStr) return false;
+                    
+                    // Verificar se é um dia de treino selecionado
+                    for (const period of savedPeriods) {
+                        if (dateStr >= period.startDate.split('T')[0] && dateStr <= period.endDate.split('T')[0]) {
+                            const dayOfWeek = date.getDay().toString();
+                            if (period.trainingDays && period.trainingDays.includes(dayOfWeek)) {
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    return false;
+                }
+
+                // Destacar dias de treino no calendário
+                function highlightTrainingDays() {
+                    // Esta função é chamada automaticamente quando os meses são gerados
+                }
+
+                function updateCarouselPosition() {
+                    // Centraliza o mês atual (posição 1 no array de 3 meses)
+                    carouselInner.style.transform = `translateX(-${100}%)`;
+                }
+
+                // Atualizar exibição do período selecionado
+                function updatePeriodDisplay() {
+                    if (startDate) {
+                        startDateDisplay.textContent = formatDate(startDate);
+                        startDateInput.value = startDate.toISOString().split('T')[0];
+                    } else {
+                        startDateDisplay.textContent = '--/--/----';
+                        startDateInput.value = '';
+                    }
+                    
+                    if (endDate) {
+                        endDateDisplay.textContent = formatDate(endDate);
+                        endDateInput.value = endDate.toISOString().split('T')[0];
+                    } else {
+                        endDateDisplay.textContent = '--/--/----';
+                        endDateInput.value = '';
+                    }
+                    
+                    if (startDate && endDate) {
+                        const totalDays = calculateTotalDays(startDate, endDate);
+                        totalDaysDisplay.textContent = `${totalDays} ${totalDays === 1 ? 'dia' : 'dias'}`;
+                        
+                        const trainingDays = countTrainingDays(startDate, endDate);
+                        trainingDaysCountEl.textContent = trainingDays;
+                        totalDaysCountEl.textContent = totalDays;
+                    } else {
+                        totalDaysDisplay.textContent = '0 dias';
+                        trainingDaysCountEl.textContent = '0';
+                        totalDaysCountEl.textContent = '0';
+                    }
+                }
+
+                // Formatar data para exibição
+            function formatDate(date) {
+                if (!date) return '--/--/----';
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+                // Calcular total de dias entre duas datas
+                function calculateTotalDays(start, end) {
+                    const diffTime = Math.abs(end - start);
+                    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                }
+
+                // Contar dias de treino selecionados no período
+                function countTrainingDays(start, end) {
+                    if (!start || !end) return 0;
+                    
+                    // Obter dias de treino selecionados
+                    const selectedDays = [];
+                    trainingDaysCheckboxes.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            selectedDays.push(parseInt(checkbox.value));
+                        }
+                    });
+                    
+                    if (selectedDays.length === 0) return 0;
+                    
+                    let count = 0;
+                    const current = new Date(start);
+                    
+                    while (current <= end) {
+                        const dayOfWeek = current.getDay();
+                        if (selectedDays.includes(dayOfWeek)) {
+                            count++;
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+                    
+                    return count;
+                }
+
+                // Carregar períodos salvos
+                function loadSavedPeriods() {
+                    savedPeriodsList.innerHTML = '';
+                    
+                    if (savedPeriods.length === 0) {
+                        savedPeriodsList.innerHTML = '<div class="no-periods">Nenhum período salvo</div>';
+                        return;
+                    }
+                    
+                    savedPeriods.forEach((period, index) => {
+                        const periodItem = document.createElement('div');
+                        periodItem.className = 'period-item';
+                        
+                        const startDate = new Date(period.startDate);
+                        const endDate = new Date(period.endDate);
+                        const totalDays = calculateTotalDays(startDate, endDate);
+                        const trainingDays = countTrainingDays(startDate, endDate);
+                        
+                        // Formatando dias de treino
+                        const trainingDaysNames = {
+                            '0': 'Dom', '1': 'Seg', '2': 'Ter', '3': 'Qua', 
+                            '4': 'Qui', '5': 'Sex', '6': 'Sáb'
+                        };
+                        const trainingDaysDisplay = period.trainingDays 
+                            ? period.trainingDays.map(day => trainingDaysNames[day]).join(', ')
+                            : 'Nenhum dia selecionado';
+                        
+                        periodItem.innerHTML = `
+                            <div class="period-item-dates">
+                                <span>${formatDate(startDate)}</span>
+                                <span>até</span>
+                                <span>${formatDate(endDate)}</span>
+                            </div>
+                            <div class="period-item-days">${totalDays} dias (${trainingDays} dias de treino)</div>
+                            ${period.beltGrade ? `<div class="period-item-info"><strong>Faixa/Grau:</strong> ${period.beltGrade}</div>` : ''}
+                            <div class="period-item-info"><strong>Dias de Treino:</strong> ${trainingDaysDisplay}</div>
+                            ${period.notes ? `<div class="period-item-info"><strong>Observações:</strong> ${period.notes}</div>` : ''}
+                            <div class="period-item-actions">
+                                <button class="btn-edit" data-index="${index}">Editar</button>
+                                <button class="btn-delete" data-index="${index}">Excluir</button>
+                            </div>
+                        `;
+                        
+                        savedPeriodsList.appendChild(periodItem);
+                    });
+                    
+                    // Adicionar event listeners aos botões
+                    document.querySelectorAll('.btn-edit').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const index = parseInt(this.dataset.index);
+                            editSavedPeriod(index);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.btn-delete').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const index = parseInt(this.dataset.index);
+                            deleteSavedPeriod(index);
+                        });
+                    });
+                }
+
+                // Editar período salvo
+                function editSavedPeriod(index) {
+                    const period = savedPeriods[index];
+                    startDate = new Date(period.startDate);
+                    endDate = new Date(period.endDate);
+                    beltGradeInput.value = period.beltGrade || '';
+                    periodNotes.value = period.notes || '';
+                    
+                    // Marcar os checkboxes dos dias de treino
+                    trainingDaysCheckboxes.forEach(checkbox => {
+                        checkbox.checked = period.trainingDays && period.trainingDays.includes(checkbox.value);
+                    });
+                    
+                    // Navegar para o mês da data inicial
+                    currentMonth = startDate.getMonth();
+                    currentYear = startDate.getFullYear();
+                    
+                    editingIndex = index;
+                    savePeriodBtn.textContent = 'Atualizar';
+                    
+                    generateMonths();
+                    updatePeriodDisplay();
+                    
+                    // Rolagem suave para o topo
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                // Excluir período salvo
+                function deleteSavedPeriod(index) {
+                    if (confirm('Tem certeza que deseja excluir este período?')) {
+                        savedPeriods.splice(index, 1);
+                        localStorage.setItem('savedPeriods', JSON.stringify(savedPeriods));
+                        loadSavedPeriods();
+                        
+                        // Se estava editando o item excluído, limpar o formulário
+                        if (editingIndex === index) {
+                            resetForm();
+                        }
+                    }
+                }
+
+                // Selecionar data ao clicar
+                carouselInner.addEventListener('click', function(e) {
+                    const dayElement = e.target.closest('.day');
+                    if (dayElement && !dayElement.classList.contains('other-month')) {
+                        const dateStr = dayElement.dataset.date;
+                        const date = createDateFromString(dateStr);
+                        lastSelectedDay = dateStr;
+                        
+                        if (isSelectingStartDate) {
+                            startDate = date;
+                            endDate = null;
+                            isSelectingStartDate = false;
+                        } else {
+                            if (date < startDate) {
+                                endDate = startDate;
+                                startDate = date;
+                            } else {
+                                endDate = date;
+                            }
+                            isSelectingStartDate = true;
+                        }
+                        
+                        generateMonths();
+                        updatePeriodDisplay();
+                        highlightSelectedDay(dateStr);
+                    }
+                });
+                                endDateInput.addEventListener('change', function() {
+                    if (this.value) {
+                        endDate = new Date(this.value);
+                        isSelectingStartDate = true;
+                        
+                        // Verificar se a data final é anterior à data inicial
+                        if (endDate < startDate) {
+                            const temp = startDate;
+                            startDate = endDate;
+                            endDate = temp;
+                        }
+                        
+                        generateMonths();
+                        updatePeriodDisplay();
+                    }
+                });
+
+                // Salvar período
+                savePeriodBtn.addEventListener('click', function() {
+                    if (!startDate || !endDate) {
+                        alert('Selecione um período completo (data inicial e final)');
+                        return;
+                    }
+                    
+                    // Obter dias de treino selecionados
+                    const trainingDays = [];
+                    trainingDaysCheckboxes.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            trainingDays.push(checkbox.value);
+                        }
+                    });
+                    
+                    const period = {
+                        startDate: startDate.toISOString(),
+                        endDate: endDate.toISOString(),
+                        beltGrade: beltGradeInput.value.trim(),
+                        trainingDays: trainingDays,
+                        notes: periodNotes.value.trim()
+                    };
+                    
+                    if (editingIndex >= 0) {
+                        // Atualizar período existente
+                        savedPeriods[editingIndex] = period;
+                        editingIndex = -1;
+                        savePeriodBtn.textContent = 'Salvar Período';
+                    } else {
+                        // Adicionar novo período
+                        savedPeriods.unshift(period);
+                    }
+                    
+                    localStorage.setItem('savedPeriods', JSON.stringify(savedPeriods));
+                    
+                    loadSavedPeriods();
+                    generateMonths(); // Para atualizar os highlights de treino
+                    
+                    // Feedback visual
+                    const buttonText = savePeriodBtn.textContent;
+                    savePeriodBtn.textContent = 'Salvo!';
+                    setTimeout(() => {
+                        savePeriodBtn.textContent = buttonText;
+                    }, 2000);
+                    
+                    // Limpar formulário se não estiver editando
+                    if (editingIndex === -1) {
+                        resetForm();
+                    }
+                });
+
+                // Resetar formulário
+                function resetForm() {
+                    startDate = null;
+                    endDate = null;
+                    isSelectingStartDate = true;
+                    beltGradeInput.value = '';
+                    periodNotes.value = '';
+                    trainingDaysCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    lastSelectedDay = null;
+                    
+                    generateMonths();
+                    updatePeriodDisplay();
+                    
+                    // Feedback visual
+                    resetPeriodBtn.textContent = 'Limpo!';
+                    setTimeout(() => {
+                        resetPeriodBtn.textContent = 'Limpar';
+                    }, 2000);
+                }
+
+                // Resetar seleção
+                resetPeriodBtn.addEventListener('click', resetForm);
+
+               
+                // Navegação entre meses
+                prevMonthBtn.addEventListener('click', function() {
+                    currentMonth--;
+                    if (currentMonth < 0) {
+                        currentMonth = 11;
+                        currentYear--;
+                    }
+                    generateMonths();
+                });
+
+                nextMonthBtn.addEventListener('click', function() {
+                    currentMonth++;
+                    if (currentMonth > 11) {
+                        currentMonth = 0;
+                        currentYear++;
+                    }
+                    generateMonths();
+                });
+
+                // Suporte para arrastar (swipe) no mobile
+                let touchStartX = 0;
+                let touchEndX = 0;
+                
+                carouselInner.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, {passive: true});
+                
+                carouselInner.addEventListener('touchend', function(e) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, {passive: true});
+                
+                function handleSwipe() {
+                    const threshold = 50; // mínima distância para considerar swipe
+                    
+                    if (touchEndX < touchStartX - threshold) {
+                        // Swipe para a esquerda (próximo mês)
+                        if (currentMonth < 11) {
+                            currentMonth++;
+                        } else {
+                            currentMonth = 0;
+                            currentYear++;
+                        }
+                        generateMonths();
+                    } else if (touchEndX > touchStartX + threshold) {
+                        // Swipe para a direita (mês anterior)
+                        if (currentMonth > 0) {
+                            currentMonth--;
+                        } else {
+                            currentMonth = 11;
+                            currentYear--;
+                        }
+                        generateMonths();
+                    }
+                }
+
+                // Inicializar
+                generateMonths();
+                loadSavedPeriods();
+            });
+        </script>
+    </body>
+    </html>
