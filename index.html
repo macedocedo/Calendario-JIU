@@ -390,6 +390,26 @@
                 margin-bottom: 15px;
             }
 
+
+            .btn-export {
+                background-color: #0000002f;
+            }
+
+            .action-buttons button {
+                /* Mantenha os estilos existentes e adicione: */
+                font-size: 0.9rem; /* Ajuste para caber o terceiro botão */
+            }
+
+            @media (max-width: 400px) {
+                .action-buttons {
+                    flex-wrap: wrap;
+                }
+                .action-buttons button {
+                    min-width: calc(50% - 5px);
+                    margin-bottom: 5px;
+                }
+            }
+
             .date-input {
                 flex: 1;
             }
@@ -519,7 +539,7 @@
                 <button id="save-period" class="btn-save">Salvar Período</button>
                 <button id="reset-period" class="btn-reset">Limpar</button>
             </div>
-
+<button id="export-data" class="btn-export">Exportar Dados</button>
             <div class="saved-periods">
                 <h3>Períodos Salvos</h3>
                 <div id="saved-periods-list">
@@ -786,13 +806,13 @@
                 }
 
                 // Formatar data para exibição
-            function formatDate(date) {
-                if (!date) return '--/--/----';
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-            }
+                function formatDate(date) {
+                    if (!date) return '--/--/----';
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                }
 
                 // Calcular total de dias entre duas datas
                 function calculateTotalDays(start, end) {
@@ -1145,6 +1165,101 @@
                 }
 
                 // Inicializar
+
+                // Elemento do botão de exportação
+const exportBtn = document.getElementById('export-data');
+
+// Função para exportar como CSV
+function exportToCSV() {
+    if (savedPeriods.length === 0) {
+        alert('Nenhum dado para exportar');
+        return;
+    }
+
+    // Cabeçalhos do CSV
+    let csv = 'Data Inicial,Data Final,Dias Totais,Dias de Treino,Faixa/Grau,Dias de Treino,Observações\n';
+
+    // Adicionar cada período
+    savedPeriods.forEach(period => {
+        const startDate = new Date(period.startDate);
+        const endDate = new Date(period.endDate);
+        const totalDays = calculateTotalDays(startDate, endDate);
+        const trainingDays = countTrainingDays(startDate, endDate);
+        
+        // Formatando dias de treino
+        const trainingDaysNames = {
+            '0': 'Dom', '1': 'Seg', '2': 'Ter', '3': 'Qua', 
+            '4': 'Qui', '5': 'Sex', '6': 'Sáb'
+        };
+        const trainingDaysDisplay = period.trainingDays 
+            ? period.trainingDays.map(day => trainingDaysNames[day]).join('; ')
+            : 'Nenhum';
+        
+        // Adicionar linha ao CSV
+        csv += `"${formatDate(startDate)}","${formatDate(endDate)}",${totalDays},${trainingDays},"${period.beltGrade || ''}","${trainingDaysDisplay}","${period.notes || ''}"\n`;
+    });
+
+            // Criar link de download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `treinos_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Função para exportar como JSON
+        function exportToJSON() {
+            if (savedPeriods.length === 0) {
+                alert('Nenhum dado para exportar');
+                return;
+            }
+
+            // Criar cópia dos dados para exportação
+            const exportData = savedPeriods.map(period => {
+                return {
+                    startDate: formatDate(new Date(period.startDate)),
+                    endDate: formatDate(new Date(period.endDate)),
+                    totalDays: calculateTotalDays(new Date(period.startDate), new Date(period.endDate)),
+                    trainingDays: countTrainingDays(new Date(period.startDate), new Date(period.endDate)),
+                    beltGrade: period.beltGrade || '',
+                    trainingDaysList: period.trainingDays || [],
+                    notes: period.notes || ''
+                };
+            });
+
+            // Criar link de download
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `treinos_${new Date().toISOString().slice(0,10)}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Menu de exportação
+        exportBtn.addEventListener('click', function() {
+            if (savedPeriods.length === 0) {
+                alert('Nenhum dado para exportar');
+                return;
+            }
+
+            const exportType = prompt('Exportar como:\n1 - CSV\n2 - JSON\n\nDigite 1 ou 2');
+            
+            if (exportType === '1') {
+                exportToCSV();
+            } else if (exportType === '2') {
+                exportToJSON();
+            } else {
+                alert('Opção inválida');
+            }
+        });
                 generateMonths();
                 loadSavedPeriods();
             });
