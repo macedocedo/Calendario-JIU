@@ -275,17 +275,6 @@
                 background-color: #e0e0e0;
             }
 
-            .day.today {
-                background-color: #4285f4;
-                color: white;
-                font-weight: bold;
-            }
-
-            .day.selected {
-                background-color: #f4b400;
-                color: white;
-                font-weight: bold;
-            }
 
             .day.in-range {
                 background-color: #a8dab5;
@@ -332,7 +321,15 @@
                 text-align: center;
                 color: #4285f4;
             }
+            .day.selecting-start {
+                background-color: #d4e6ff;
+                font-weight: bold;
+            }
 
+            .day.selecting-end {
+                background-color: #ffe0e0;
+                font-weight: bold;
+            }
             .period-item {
                 background-color: white;
                 border-radius: 8px;
@@ -512,11 +509,6 @@
                 </div>
             </div>
 
-            <div class="action-buttons">
-                <button id="save-period" class="btn-save">Salvar Período</button>
-                <button id="reset-period" class="btn-reset">Limpar</button>
-            </div>
-
             <div class="carousel">
                 <div class="carousel-inner" id="carousel-inner">
                     <!-- Os meses serão gerados dinamicamente via JavaScript -->
@@ -525,6 +517,11 @@
                     <button id="prev-month">←</button>
                     <button id="next-month">→</button>
                 </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="save-period" class="btn-save">Salvar Período</button>
+                <button id="reset-period" class="btn-reset">Limpar</button>
             </div>
 
             <div class="saved-periods">
@@ -570,12 +567,10 @@
             function generateMonths() {
                 carouselInner.innerHTML = '';
                 
-                // Gerar 3 meses: anterior, atual e próximo
                 for (let i = -1; i <= 1; i++) {
                     let month = currentMonth + i;
                     let year = currentYear;
                     
-                    // Ajustar o mês e ano se ultrapassar os limites
                     if (month < 0) {
                         month = 11;
                         year--;
@@ -595,8 +590,13 @@
                 updatePeriodDisplay();
                 highlightTrainingDays();
                 
-                if (lastSelectedDay) {
-                    highlightSelectedDay(lastSelectedDay);
+                // Adicionar classe de seleção aos dias
+                if (!isSelectingStartDate && startDate) {
+                    const startStr = formatDateForStorage(startDate);
+                    const dayElement = document.querySelector(`.day[data-date="${startStr}"]`);
+                    if (dayElement) {
+                        dayElement.classList.add('selecting-end');
+                    }
                 }
             }
 
@@ -662,32 +662,29 @@
             }
 
                 // Gerar HTML de um dia específico
-        function generateDayHTML(dayNumber, date, isOtherMonth) {
-            // Usar a data local sem conversão de fuso horário
-            const dateStr = formatDateForStorage(date);
-            const todayStr = formatDateForStorage(new Date());
-            const isToday = dateStr === todayStr;
-            const isStartDate = startDate && dateStr === formatDateForStorage(startDate);
-            const isEndDate = endDate && dateStr === formatDateForStorage(endDate);
-            const isInRange = isDateInRange(date);
-            const isTrainingDay = isTrainingDate(date);
-            const isSelected = lastSelectedDay === dateStr;
-            
-            let classes = ['day'];
-            if (isOtherMonth) classes.push('other-month');
-            if (isToday) classes.push('today');
-            if (isStartDate) classes.push('range-start');
-            if (isEndDate) classes.push('range-end');
-            if (isInRange && !isStartDate && !isEndDate) classes.push('in-range');
-            if (isTrainingDay) classes.push('training-day');
-            if (isSelected) classes.push('selected');
-            
-            return `
-                <div class="${classes.join(' ')}" data-date="${dateStr}">
-                    <div class="day-number">${dayNumber}</div>
-                </div>
-            `;
-        }
+            function generateDayHTML(dayNumber, date, isOtherMonth) {
+                const dateStr = formatDateForStorage(date);
+                const todayStr = formatDateForStorage(new Date());
+                const isToday = dateStr === todayStr;
+                const isStartDate = startDate && dateStr === formatDateForStorage(startDate);
+                const isEndDate = endDate && dateStr === formatDateForStorage(endDate);
+                const isInRange = isDateInRange(date);
+                const isTrainingDay = isTrainingDate(date);
+                
+                let classes = ['day'];
+                if (isOtherMonth) classes.push('other-month');
+                if (isToday) classes.push('today');
+                if (isStartDate) classes.push('range-start');
+                if (isEndDate) classes.push('range-end');
+                if (isInRange && !isStartDate && !isEndDate) classes.push('in-range');
+                if (isTrainingDay) classes.push('training-day');
+                
+                return `
+                    <div class="${classes.join(' ')}" data-date="${dateStr}">
+                        <div class="day-number">${dayNumber}</div>
+                    </div>
+                `;
+            }
         // Função para formatar a data para armazenamento (YYYY-MM-DD)
         function formatDateForStorage(date) {
             const year = date.getFullYear();
@@ -939,32 +936,68 @@
                 }
 
                 // Selecionar data ao clicar
-                carouselInner.addEventListener('click', function(e) {
-                    const dayElement = e.target.closest('.day');
-                    if (dayElement && !dayElement.classList.contains('other-month')) {
-                        const dateStr = dayElement.dataset.date;
-                        const date = createDateFromString(dateStr);
+            carouselInner.addEventListener('click', function(e) {
+                const dayElement = e.target.closest('.day');
+                if (dayElement && !dayElement.classList.contains('other-month')) {
+                    const dateStr = dayElement.dataset.date;
+                    const date = createDateFromString(dateStr);
+                    
+                    // Se não há data inicial ou estamos reiniciando a seleção
+                    if (!startDate || (startDate && endDate)) {
+                        startDate = date;
+                        endDate = null;
+                        isSelectingStartDate = false;
                         lastSelectedDay = dateStr;
-                        
-                        if (isSelectingStartDate) {
+                    } 
+                    // Se já temos data inicial mas não final
+                    else if (startDate && !endDate) {
+                        if (date < startDate) {
+                            endDate = startDate;
                             startDate = date;
-                            endDate = null;
-                            isSelectingStartDate = false;
                         } else {
-                            if (date < startDate) {
-                                endDate = startDate;
-                                startDate = date;
-                            } else {
-                                endDate = date;
-                            }
-                            isSelectingStartDate = true;
+                            endDate = date;
                         }
-                        
-                        generateMonths();
-                        updatePeriodDisplay();
-                        highlightSelectedDay(dateStr);
+                        isSelectingStartDate = true;
+                        lastSelectedDay = dateStr;
                     }
-                });
+                    
+                    generateMonths();
+                    updatePeriodDisplay();
+                }
+            });
+
+            startDateInput.addEventListener('change', function() {
+                if (this.value) {
+                    startDate = new Date(this.value);
+                    isSelectingStartDate = false;
+                    
+                    // Se houver data final e for anterior à nova data inicial, limpar
+                    if (endDate && endDate < startDate) {
+                        endDate = null;
+                    }
+                    
+                    generateMonths();
+                    updatePeriodDisplay();
+                }
+            });
+
+            endDateInput.addEventListener('change', function() {
+                if (this.value) {
+                    endDate = new Date(this.value);
+                    isSelectingStartDate = true;
+                    
+                    // Verificar se a data final é anterior à data inicial
+                    if (startDate && endDate < startDate) {
+                        const temp = startDate;
+                        startDate = endDate;
+                        endDate = temp;
+                    }
+                    
+                    generateMonths();
+                    updatePeriodDisplay();
+                }
+            });
+
                                 endDateInput.addEventListener('change', function() {
                     if (this.value) {
                         endDate = new Date(this.value);
