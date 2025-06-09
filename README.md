@@ -1,6 +1,5 @@
 # https://macedocedo.github.io/Calendario-JIU/
 
-
 # 📅 Calendário de Treinos
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
@@ -20,18 +19,8 @@
 
 ## 🚀 Como Usar
 
-1. Acesse o aplicativo [aqui](#) *(link para sua página)*
+1. Acesse o aplicativo [aqui](#) *(https://macedocedo.github.io/Calendario-JIU/)*
 2. Selecione as datas inicial e final
 3. Escolha os dias de treino
 4. Adicione informações adicionais (opcional)
 5. Clique em "Salvar Período"
-
-```javascript
-// Exemplo de estrutura de dados armazenada
-{
-  startDate: "2023-01-01",
-  endDate: "2023-01-31",
-  beltGrade: "Faixa Azul",
-  trainingDays: ["1", "3", "5"], // Seg, Qua, Sex
-  notes: "Treino para competição"
-}
