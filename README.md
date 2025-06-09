@@ -7,10 +7,6 @@
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 
-Um aplicativo web responsivo para planejamento e acompanhamento de períodos de treino, com armazenamento local dos dados.
-
-![Preview da Aplicação](https://via.placeholder.com/800x500.png?text=Calendário+de+Treinos+Preview) *(imagem ilustrativa)*
-
 ## ✨ Funcionalidades Principais
 
 | Funcionalidade | Descrição |
