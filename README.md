@@ -19,7 +19,7 @@
 
 ## 🚀 Como Usar
 
-1. Acesse o aplicativo [aqui](#) *(https://macedocedo.github.io/Calendario-JIU/)*
+1. Acesse o aplicativo [aqui]([#](https://macedocedo.github.io/Calendario-JIU/)
 2. Selecione as datas inicial e final
 3. Escolha os dias de treino
 4. Adicione informações adicionais (opcional)
